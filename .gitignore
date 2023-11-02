@@ -1,0 +1,6 @@
+/target
+/tp
+/tp_src
+**/.DS_Store
+**/a.out
+/logs
