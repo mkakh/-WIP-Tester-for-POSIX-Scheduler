@@ -1,6 +1,6 @@
 # [WIP] POSIX Scheduler Tester
 
-This program is currently not stable yet.
+This program has been unstable yet.
 
 We have a plan to release the stable version later.
 
