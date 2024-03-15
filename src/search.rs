@@ -3,13 +3,13 @@ use crate::test_suite::*;
 use crate::*;
 
 // e.g.) [(0,2),(1,1),(3,4)] |-> [[0, 1, 3], [0, 1, 4], [1, 1, 3], [1, 1, 4], [2, 1, 3], [2, 1, 4]]
-fn cartesian_product(ak: &Vec<(usize, usize)>) -> Vec<Vec<usize>> {
+fn cartesian_product(ak: &[(usize, usize)]) -> Vec<Vec<usize>> {
     if ak.is_empty() {
         vec![vec![]]
     } else if ak.len() == 1 {
         (ak[0].0..=ak[0].1).map(|x| vec![x]).collect()
     } else {
-        let mut nxt_ak: Vec<(usize, usize)> = ak.clone();
+        let mut nxt_ak: Vec<(usize, usize)> = ak.to_vec();
         let (fst, snd) = nxt_ak.pop().unwrap();
         iproduct!(cartesian_product(&nxt_ak), fst..=snd)
             .map(|(mut a, b)| {
