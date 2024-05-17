@@ -15,23 +15,23 @@ impl super::FormalizedFunction for PthreadExit {
 
     fn call(&self, current: &scheduler::State, args: &[usize]) -> Vec<scheduler::State> {
         assert!(super::check_args(self, args));
-        let tid= args[0];
+        let tid = args[0];
 
         let mut next = current.clone();
         for (i, core) in current.cpu.cores.iter().enumerate() {
-          if let Some(task) = &core.task {
-            if task.tid == tid as u32 {
-              let mut task = {
-                let t = next.cpu.cores[i].task.take();
-                assert!(t.is_some());
-                t.unwrap()
-              };
+            if let Some(task) = &core.task {
+                if task.tid == tid as u32 {
+                    let mut task = {
+                        let t = next.cpu.cores[i].task.take();
+                        assert!(t.is_some());
+                        t.unwrap()
+                    };
 
-              task.state = TaskState::Terminated;
-              next.terminated_tasks.push(task);
-              return next.schedule();
+                    task.state = TaskState::Terminated;
+                    next.terminated_tasks.push(task);
+                    return next.schedule();
+                }
             }
-          }
         }
         unreachable!();
     }
