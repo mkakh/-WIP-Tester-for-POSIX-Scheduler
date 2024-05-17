@@ -29,10 +29,14 @@ impl TaskControlBlock {
 //pub(crate) type TcbPtr = Rc<RefCell<TaskControlBlock>>;
 pub(crate) type TcbPtr = Box<TaskControlBlock>;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub(crate) struct ReadyQueue(VecDeque<TcbPtr>);
 
 impl ReadyQueue {
+    pub(crate) fn new() -> Self {
+        ReadyQueue(VecDeque::new())
+    }
+
     pub(crate) fn enqueue(&mut self, new_task: TcbPtr) {
         let mut pos = 0;
         if !self.0.is_empty() {
@@ -46,18 +50,16 @@ impl ReadyQueue {
         self.0.insert(pos, new_task);
     }
 
+    pub(crate) fn front(&self) -> Option<&TcbPtr> {
+        self.0.front()
+    }
+
     pub(crate) fn dequeue(&mut self) -> Option<TcbPtr> {
         self.0.pop_front()
     }
 
-    // `iter`メソッドを追加
     pub(crate) fn iter(&self) -> std::collections::vec_deque::Iter<TcbPtr> {
         self.0.iter()
-    }
-
-    // `iter_mut`メソッドを追加
-    pub(crate) fn iter_mut(&mut self) -> std::collections::vec_deque::IterMut<TcbPtr> {
-        self.0.iter_mut()
     }
 }
 

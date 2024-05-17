@@ -1,9 +1,5 @@
-use crate::spec;
+// use crate::spec;
 
-struct State {
-    ready_queue: spec::sched_data::ReadyQueue,
-    tcb: spec::sched_data::TaskControlBlock,
-}
 //struct OracleTree {
 //    expected_state: State,
 //    children: Vec<Spec, Arg, OracleTree>,

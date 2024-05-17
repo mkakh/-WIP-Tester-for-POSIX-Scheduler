@@ -2,7 +2,7 @@ mod pthread_create;
 mod pthread_exit;
 use crate::spec::scheduler;
 
-pub(crate) trait FormalizedFunction {
+pub trait FormalizedFunction {
     fn name(&self) -> &str;
     fn args(&self) -> &[(usize, usize)];
     fn call(&self, current: &scheduler::State, args: &[usize]) -> Vec<scheduler::State>;
@@ -21,12 +21,12 @@ fn check_args(f: &dyn FormalizedFunction, args: &[usize]) -> bool {
 }
 
 // TODO change the name
-pub(crate) enum FormalizedFunctionType {
+pub enum FormalizedFunctionType {
     PthreadCreate,
     PthreadExit,
 }
 
-pub(crate) fn get_function(fn_type: FormalizedFunctionType) -> &'static dyn FormalizedFunction {
+pub fn get_function(fn_type: FormalizedFunctionType) -> &'static dyn FormalizedFunction {
     match fn_type {
         FormalizedFunctionType::PthreadCreate => &pthread_create::FUNCTION,
         FormalizedFunctionType::PthreadExit => &pthread_exit::FUNCTION,

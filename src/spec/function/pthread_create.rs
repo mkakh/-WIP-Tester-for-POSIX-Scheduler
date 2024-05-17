@@ -21,4 +21,4 @@ impl super::FormalizedFunction for PthreadCreate {
     }
 }
 
-pub(crate) static FUNCTION: PthreadCreate = PthreadCreate;
+pub static FUNCTION: PthreadCreate = PthreadCreate;
