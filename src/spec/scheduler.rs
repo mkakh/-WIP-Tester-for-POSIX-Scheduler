@@ -2,8 +2,9 @@ use crate::spec::{cpu, sched_data};
 
 #[derive(Clone)]
 pub(crate) struct State {
-    cpu: cpu::CPU,
-    ready_queue: sched_data::ReadyQueue,
+    pub(crate) cpu: cpu::CPU,
+    pub(crate) ready_queue: sched_data::ReadyQueue,
+    pub(crate) terminated_tasks : Vec<sched_data::TcbPtr>,
 }
 
 impl State {
@@ -61,10 +62,9 @@ impl State {
         };
 
         let mut new_task = Box::new(sched_data::TaskControlBlock::new(tid, prio));
-
+        new_task.state = sched_data::TaskState::Ready;
         let mut next = self.clone();
         next.ready_queue.enqueue(new_task);
-        new_task.state = sched_data::TaskState::Ready;
         next
     }
 

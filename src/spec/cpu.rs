@@ -13,7 +13,7 @@ pub(crate) struct Core {
 }
 
 impl CPU {
-    pub fn new(n: u32) -> CPU {
+    pub(crate) fn new(n: u32) -> CPU {
         let mut cores = vec![];
         for id in 0..n {
             cores.push(Core { id, task: None });
