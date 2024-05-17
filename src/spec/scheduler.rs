@@ -12,7 +12,8 @@ impl State {
         let mut next = self.clone();
         for (i, core) in self.cpu.cores.iter().enumerate() {
             if core.id == cpu_id {
-                if let Some(task) = next.cpu.cores[i].task.take() {
+                if let Some(mut task) = next.cpu.cores[i].task.take() {
+                    task.state = sched_data::TaskState::Ready;
                     next.ready_queue.enqueue(task);
                 }
                 break;
@@ -31,7 +32,9 @@ impl State {
             let mut next = self.clone();
             for (i, core) in self.cpu.cores.iter().enumerate() {
                 if core.id == available_core.id {
-                    next.cpu.cores[i].task = Some(task.clone());
+                    let mut task = task.clone();
+                    task.state = sched_data::TaskState::Running;
+                    next.cpu.cores[i].task = Some(task);
                     nexts.push(next);
                     break;
                 }
@@ -57,10 +60,11 @@ impl State {
             tid + 1
         };
 
-        let new_task = Box::new(sched_data::TaskControlBlock::new(tid, prio));
+        let mut new_task = Box::new(sched_data::TaskControlBlock::new(tid, prio));
 
         let mut next = self.clone();
         next.ready_queue.enqueue(new_task);
+        new_task.state = sched_data::TaskState::Ready;
         next
     }
 
