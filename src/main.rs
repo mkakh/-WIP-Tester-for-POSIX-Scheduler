@@ -1,7 +1,47 @@
-use posix_sched_tester::spec::{function, scheduler};
+mod spec;
+
+use spec::{function, scheduler};
+
 fn main() {
-    let state = scheduler::State::new(2);
-    let new_states =
-        function::get_function(function::FormalizedFunctionType::PthreadCreate).call(&state, &[3]);
-    println!("{:?}", new_states);
+    let mut states = scheduler::State::new(2).create_task(1).schedule();
+
+    let mut new_states = vec![];
+    for state in states.into_iter() {
+        for new_state in function::get_function(function::FormalizedFunctionType::PthreadCreate)
+            .call(&state, 1, &[3])
+            .into_iter()
+        {
+            if !new_states.contains(&new_state) {
+                new_states.push(new_state);
+            }
+        }
+    }
+    states = new_states;
+
+    let mut new_states = vec![];
+    for state in states.into_iter() {
+        for new_state in function::get_function(function::FormalizedFunctionType::PthreadCreate)
+            .call(&state, 1, &[3])
+            .into_iter()
+        {
+            if !new_states.contains(&new_state) {
+                new_states.push(new_state);
+            }
+        }
+    }
+    states = new_states;
+
+    let mut new_states = vec![];
+    for state in states.into_iter() {
+        for new_state in function::get_function(function::FormalizedFunctionType::PthreadExit)
+            .call(&state, 3, &[])
+            .into_iter()
+        {
+            if !new_states.contains(&new_state) {
+                new_states.push(new_state);
+            }
+        }
+    }
+    states = new_states;
+    println!("{:#?}", states);
 }
