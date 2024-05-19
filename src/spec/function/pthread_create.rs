@@ -3,8 +3,16 @@ use crate::spec::scheduler;
 pub(crate) struct PthreadCreate;
 
 impl super::FormalizedFunction for PthreadCreate {
-    fn name(&self) -> &str {
-        "pthread_create"
+    fn is_invokable(&self, current: &scheduler::State, caller: u32, _args: &[usize]) -> bool {
+        for core in current.cpu.cores.iter() {
+            if let Some(task) = &core.task {
+                if task.tid == caller {
+                    return true;
+                }
+            }
+        }
+
+        false
     }
 
     // TODO check
@@ -13,8 +21,15 @@ impl super::FormalizedFunction for PthreadCreate {
         &[(1, 99)]
     }
 
-    fn call(&self, current: &scheduler::State, args: &[usize]) -> Vec<scheduler::State> {
+    fn call(
+        &self,
+        current: &scheduler::State,
+        caller: u32,
+        args: &[usize],
+    ) -> Vec<scheduler::State> {
         assert!(super::check_args(self, args));
+        assert!(self.is_invokable(current, caller, args));
+
         let prio = args[0];
 
         current.create_task(prio as u32).schedule()
@@ -40,7 +55,7 @@ mod tests {
             state,
             State {
                 cpu: CPU {
-                    cores: vec![Core { id: 0, task: None }, Core { id: 1, task: None }]
+                    cores: vec![Core { id: 0, task: }, Core { id: 1, task: None }]
                 },
                 ready_queue: ReadyQueue::new(),
                 terminated_tasks: vec![]
