@@ -24,12 +24,14 @@ impl State {
             if core.id == cpu_id {
                 if let Some(mut task) = next.cpu.cores[i].task.take() {
                     task.state = sched_data::TaskState::Ready;
+                    // TODO: is it ok to use enqueue here?
                     next.ready_queue.enqueue(task);
                 }
                 break;
             }
         }
 
+        assert_ne!(&next, self);
         next
     }
 
@@ -103,6 +105,7 @@ impl State {
             made_progress = false;
         }
 
+        assert!(!states.is_empty());
         states
     }
 
@@ -117,7 +120,12 @@ impl State {
                 }
             }
         }
-        new_states
+
+        if new_states.is_empty() {
+            vec![self.clone()]
+        } else {
+            new_states
+        }
     }
 
     pub(crate) fn schedule(&self) -> Vec<State> {
@@ -145,6 +153,76 @@ impl State {
             new_states = vec![];
         }
 
+        assert!(!new_states.is_empty());
         new_states
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::spec::{
+        cpu::{Core, CPU},
+        function::{get_function, FormalizedFunctionType},
+        sched_data::{ReadyQueue, TaskControlBlock, TaskState},
+        scheduler::State,
+    };
+    use std::collections::VecDeque;
+
+    #[test]
+    fn test_preempt_to_lower_priority_tasks() {
+        let init = State {
+            cpu: CPU {
+                cores: vec![Core {
+                    id: 0,
+                    task: Some(Box::new(TaskControlBlock {
+                        tid: 1,
+                        prio: 3,
+                        state: TaskState::Running,
+                    })),
+                }],
+            },
+            ready_queue: ReadyQueue(VecDeque::from(vec![
+                Box::new(TaskControlBlock {
+                    tid: 3,
+                    prio: 4,
+                    state: TaskState::Ready,
+                }),
+                Box::new(TaskControlBlock {
+                    tid: 2,
+                    prio: 1,
+                    state: TaskState::Ready,
+                }),
+            ])),
+            terminated_tasks: vec![],
+        };
+
+        let states = init.preempt_to_lower_priority_tasks();
+
+        println!("{:?}", states);
+        let expected_result = vec![State {
+            cpu: CPU {
+                cores: vec![Core { id: 0, task: None }],
+            },
+            ready_queue: ReadyQueue(VecDeque::from(vec![
+                Box::new(TaskControlBlock {
+                    tid: 3,
+                    prio: 4,
+                    state: TaskState::Ready,
+                }),
+                Box::new(TaskControlBlock {
+                    tid: 1,
+                    prio: 3,
+                    state: TaskState::Ready,
+                }),
+                Box::new(TaskControlBlock {
+                    tid: 2,
+                    prio: 1,
+                    state: TaskState::Ready,
+                }),
+            ])),
+            terminated_tasks: vec![],
+        }];
+
+        assert_eq!(expected_result, states);
     }
 }

@@ -30,7 +30,7 @@ impl TaskControlBlock {
 pub(crate) type TcbPtr = Box<TaskControlBlock>;
 
 #[derive(Clone, PartialEq, Eq, Debug)]
-pub(crate) struct ReadyQueue(VecDeque<TcbPtr>);
+pub(crate) struct ReadyQueue(pub(crate) VecDeque<TcbPtr>);
 
 impl ReadyQueue {
     pub(crate) fn new() -> Self {
@@ -38,16 +38,24 @@ impl ReadyQueue {
     }
 
     pub(crate) fn enqueue(&mut self, new_task: TcbPtr) {
-        let mut pos = 0;
-        if !self.0.is_empty() {
-            for (i, tcb) in self.0.iter().enumerate().rev() {
-                if tcb.prio == new_task.prio {
-                    pos = i + 1;
-                    break;
-                }
+        if self.0.is_empty() {
+            self.0.push_back(new_task);
+            return;
+        }
+
+        if let Some(front_task) = self.front() {
+            if new_task.prio > front_task.prio {
+                self.0.push_front(new_task);
+                return;
             }
         }
-        self.0.insert(pos, new_task);
+
+        for pos in (1..=self.0.len()).rev() {
+            if self.0[pos - 1].prio >= new_task.prio {
+                self.0.insert(pos, new_task);
+                break;
+            }
+        }
     }
 
     pub(crate) fn front(&self) -> Option<&TcbPtr> {
@@ -69,6 +77,41 @@ mod tests {
 
     #[test]
     fn test_enqueue() {
+        let mut inputs = vec![vec![]];
+        const MAX_PRIO: usize = 3;
+
+        for i in 1..=MAX_PRIO {
+            inputs.push(vec![i]);
+            for j in 1..=MAX_PRIO {
+                inputs.push(vec![i, j]);
+                for k in 1..=MAX_PRIO {
+                    inputs.push(vec![i, j, k]);
+                    for l in 1..=MAX_PRIO {
+                        for m in 1..=MAX_PRIO {
+                            inputs.push(vec![i, j, k, l, m]);
+                        }
+                    }
+                }
+            }
+        }
+
+        for input in inputs.into_iter() {
+            let mut queue = ReadyQueue::new();
+
+            for (i, prio) in input.into_iter().enumerate() {
+                queue.enqueue(Box::new(TaskControlBlock::new((i + 1) as u32, prio as u32)))
+            }
+
+            for (i, _) in queue.0.iter().enumerate() {
+                if queue.0.len() > i + 1 {
+                    assert!(queue.0[i].prio >= queue.0[i + 1].prio, "{:?}", queue);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_simple_enqueue() {
         let mut queue = ReadyQueue(VecDeque::new());
 
         let task1 = Box::new(TaskControlBlock {
@@ -146,7 +189,7 @@ mod tests {
         let expected_order = vec![task2, task4, task1];
 
         for (task, expected_task) in queue.0.iter().zip(expected_order.iter()) {
-            assert_eq!(task, expected_task);
+            assert_eq!(task, expected_task, "queue: {:?}", queue);
         }
     }
 }
