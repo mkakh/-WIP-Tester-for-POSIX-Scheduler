@@ -1,6 +1,6 @@
 use crate::spec::scheduler;
 
-pub(crate) struct PthreadCreate;
+pub struct PthreadCreate;
 
 impl super::FormalizedFunction for PthreadCreate {
     fn is_invokable(&self, current: &scheduler::State, caller: u32, _args: &[usize]) -> bool {
