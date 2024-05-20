@@ -9,7 +9,7 @@ pub(crate) struct CPU {
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub(crate) struct Core {
     pub(crate) id: u32,
-    pub(crate) task: Option<sched_data::TcbPtr>,
+    pub(crate) task: Option<sched_data::TaskControlBlock>,
 }
 
 impl CPU {

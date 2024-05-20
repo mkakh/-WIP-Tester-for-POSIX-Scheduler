@@ -5,7 +5,7 @@ use crate::spec::{cpu::CPU, sched_data};
 pub struct State {
     pub(crate) cpu: CPU,
     pub(crate) ready_queue: sched_data::ReadyQueue,
-    pub(crate) terminated_tasks: Vec<sched_data::TcbPtr>,
+    pub(crate) terminated_tasks: Vec<sched_data::TaskControlBlock>,
 }
 
 impl State {
@@ -36,7 +36,7 @@ impl State {
     }
 
     // Dispatches a task to an idle random CPU core.
-    pub(crate) fn dispatch(&self, task: sched_data::TcbPtr) -> Vec<State> {
+    pub(crate) fn dispatch(&self, task: sched_data::TaskControlBlock) -> Vec<State> {
         let mut nexts = vec![];
 
         for idle_core in self.cpu.get_idle_cores().iter() {
@@ -71,7 +71,7 @@ impl State {
             tid + 1
         };
 
-        let mut new_task = Box::new(sched_data::TaskControlBlock::new(tid, prio));
+        let mut new_task = sched_data::TaskControlBlock::new(tid, prio);
         new_task.state = sched_data::TaskState::Ready;
         let mut next = self.clone();
         next.ready_queue.enqueue(new_task);
@@ -162,7 +162,6 @@ impl State {
 mod test {
     use crate::spec::{
         cpu::{Core, CPU},
-        function::{get_function, FormalizedFunctionType},
         sched_data::{ReadyQueue, TaskControlBlock, TaskState},
         scheduler::State,
     };
@@ -174,24 +173,24 @@ mod test {
             cpu: CPU {
                 cores: vec![Core {
                     id: 0,
-                    task: Some(Box::new(TaskControlBlock {
+                    task: Some(TaskControlBlock {
                         tid: 1,
                         prio: 3,
                         state: TaskState::Running,
-                    })),
+                    }),
                 }],
             },
             ready_queue: ReadyQueue(VecDeque::from(vec![
-                Box::new(TaskControlBlock {
+                TaskControlBlock {
                     tid: 3,
                     prio: 4,
                     state: TaskState::Ready,
-                }),
-                Box::new(TaskControlBlock {
+                },
+                TaskControlBlock {
                     tid: 2,
                     prio: 1,
                     state: TaskState::Ready,
-                }),
+                },
             ])),
             terminated_tasks: vec![],
         };
@@ -204,21 +203,21 @@ mod test {
                 cores: vec![Core { id: 0, task: None }],
             },
             ready_queue: ReadyQueue(VecDeque::from(vec![
-                Box::new(TaskControlBlock {
+                TaskControlBlock {
                     tid: 3,
                     prio: 4,
                     state: TaskState::Ready,
-                }),
-                Box::new(TaskControlBlock {
+                },
+                TaskControlBlock {
                     tid: 1,
                     prio: 3,
                     state: TaskState::Ready,
-                }),
-                Box::new(TaskControlBlock {
+                },
+                TaskControlBlock {
                     tid: 2,
                     prio: 1,
                     state: TaskState::Ready,
-                }),
+                },
             ])),
             terminated_tasks: vec![],
         }];

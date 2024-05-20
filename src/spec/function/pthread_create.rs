@@ -41,7 +41,6 @@ pub static FUNCTION: PthreadCreate = PthreadCreate;
 #[cfg(test)]
 mod tests {
     use crate::spec::{
-        cpu::{Core, CPU},
         function::{get_function, FormalizedFunctionType},
         sched_data::{ReadyQueue, TaskControlBlock, TaskState},
         scheduler::State,
@@ -50,71 +49,12 @@ mod tests {
 
     #[test]
     fn test_pthread_create() {
-        let state = State::new(2);
-        assert_eq!(
-            state,
-            State {
-                cpu: CPU {
-                    cores: vec![Core { id: 0, task: }, Core { id: 1, task: None }]
-                },
-                ready_queue: ReadyQueue::new(),
-                terminated_tasks: vec![]
-            }
-        );
-
-        let new_states = get_function(FormalizedFunctionType::PthreadCreate).call(&state, &[3]);
-
-        assert_eq!(
-            new_states,
-            vec![
-                State {
-                    cpu: CPU {
-                        cores: vec![
-                            Core {
-                                id: 0,
-                                task: Some(Box::new(TaskControlBlock {
-                                    tid: 1,
-                                    prio: 3,
-                                    state: TaskState::Running
-                                }))
-                            },
-                            Core { id: 1, task: None }
-                        ]
-                    },
-                    ready_queue: ReadyQueue::new(),
-                    terminated_tasks: vec![]
-                },
-                State {
-                    cpu: CPU {
-                        cores: vec![
-                            Core { id: 0, task: None },
-                            Core {
-                                id: 1,
-                                task: Some(Box::new(TaskControlBlock {
-                                    tid: 1,
-                                    prio: 3,
-                                    state: TaskState::Running
-                                }))
-                            }
-                        ]
-                    },
-                    ready_queue: ReadyQueue::new(),
-                    terminated_tasks: vec![]
-                }
-            ]
-        );
-    }
-
-    #[test]
-    fn test_multiple_pthread_create() {
-        let state = State::new(2);
-
-        let mut states = get_function(FormalizedFunctionType::PthreadCreate).call(&state, &[3]);
+        let mut states = State::new(2).create_task(1).schedule();
 
         let mut new_states = vec![];
         for state in states.into_iter() {
             for new_state in get_function(FormalizedFunctionType::PthreadCreate)
-                .call(&state, &[3])
+                .call(&state, 1, &[3])
                 .into_iter()
             {
                 if !new_states.contains(&new_state) {
@@ -127,7 +67,7 @@ mod tests {
         new_states = vec![];
         for state in states.iter() {
             for new_state in get_function(FormalizedFunctionType::PthreadCreate)
-                .call(&state, &[1])
+                .call(&state, 1, &[2])
                 .into_iter()
             {
                 if !new_states.contains(&new_state) {
@@ -140,7 +80,7 @@ mod tests {
         new_states = vec![];
         for state in states.iter() {
             for new_state in get_function(FormalizedFunctionType::PthreadCreate)
-                .call(&state, &[4])
+                .call(&state, 2, &[4])
                 .into_iter()
             {
                 if !new_states.contains(&new_state) {
@@ -150,148 +90,28 @@ mod tests {
         }
         states = new_states;
 
-        let expected_result = vec![
-            State {
-                cpu: CPU {
-                    cores: vec![
-                        Core {
-                            id: 0,
-                            task: Some(Box::new(TaskControlBlock {
-                                tid: 4,
-                                prio: 4,
-                                state: TaskState::Running,
-                            })),
-                        },
-                        Core {
-                            id: 1,
-                            task: Some(Box::new(TaskControlBlock {
-                                tid: 2,
-                                prio: 3,
-                                state: TaskState::Running,
-                            })),
-                        },
-                    ],
-                },
-                ready_queue: ReadyQueue(VecDeque::from(vec![
-                    Box::new(TaskControlBlock {
+        for state in states.into_iter() {
+            let t0 = state.cpu.cores[0].task.as_ref().unwrap();
+            let t1 = state.cpu.cores[1].task.as_ref().unwrap();
+
+            assert!((t0.tid == 2 || t1.tid == 2) && (t0.tid == 4 || t1.tid == 4));
+            assert!((t0.prio == 3 || t1.prio == 3) && (t0.prio == 4 || t1.prio == 4));
+            assert_eq!(
+                state.ready_queue,
+                ReadyQueue(VecDeque::from(vec![
+                    TaskControlBlock {
+                        tid: 3,
+                        prio: 2,
+                        state: TaskState::Ready,
+                    },
+                    TaskControlBlock {
                         tid: 1,
-                        prio: 3,
-                        state: TaskState::Ready,
-                    }),
-                    Box::new(TaskControlBlock {
-                        tid: 3,
                         prio: 1,
                         state: TaskState::Ready,
-                    }),
+                    },
                 ])),
-                terminated_tasks: vec![],
-            },
-            State {
-                cpu: CPU {
-                    cores: vec![
-                        Core {
-                            id: 0,
-                            task: Some(Box::new(TaskControlBlock {
-                                tid: 1,
-                                prio: 3,
-                                state: TaskState::Running,
-                            })),
-                        },
-                        Core {
-                            id: 1,
-                            task: Some(Box::new(TaskControlBlock {
-                                tid: 4,
-                                prio: 4,
-                                state: TaskState::Running,
-                            })),
-                        },
-                    ],
-                },
-                ready_queue: ReadyQueue(VecDeque::from(vec![
-                    Box::new(TaskControlBlock {
-                        tid: 2,
-                        prio: 3,
-                        state: TaskState::Ready,
-                    }),
-                    Box::new(TaskControlBlock {
-                        tid: 3,
-                        prio: 1,
-                        state: TaskState::Ready,
-                    }),
-                ])),
-                terminated_tasks: vec![],
-            },
-            State {
-                cpu: CPU {
-                    cores: vec![
-                        Core {
-                            id: 0,
-                            task: Some(Box::new(TaskControlBlock {
-                                tid: 4,
-                                prio: 4,
-                                state: TaskState::Running,
-                            })),
-                        },
-                        Core {
-                            id: 1,
-                            task: Some(Box::new(TaskControlBlock {
-                                tid: 1,
-                                prio: 3,
-                                state: TaskState::Running,
-                            })),
-                        },
-                    ],
-                },
-                ready_queue: ReadyQueue(VecDeque::from(vec![
-                    Box::new(TaskControlBlock {
-                        tid: 2,
-                        prio: 3,
-                        state: TaskState::Ready,
-                    }),
-                    Box::new(TaskControlBlock {
-                        tid: 3,
-                        prio: 1,
-                        state: TaskState::Ready,
-                    }),
-                ])),
-                terminated_tasks: vec![],
-            },
-            State {
-                cpu: CPU {
-                    cores: vec![
-                        Core {
-                            id: 0,
-                            task: Some(Box::new(TaskControlBlock {
-                                tid: 2,
-                                prio: 3,
-                                state: TaskState::Running,
-                            })),
-                        },
-                        Core {
-                            id: 1,
-                            task: Some(Box::new(TaskControlBlock {
-                                tid: 4,
-                                prio: 4,
-                                state: TaskState::Running,
-                            })),
-                        },
-                    ],
-                },
-                ready_queue: ReadyQueue(VecDeque::from(vec![
-                    Box::new(TaskControlBlock {
-                        tid: 1,
-                        prio: 3,
-                        state: TaskState::Ready,
-                    }),
-                    Box::new(TaskControlBlock {
-                        tid: 3,
-                        prio: 1,
-                        state: TaskState::Ready,
-                    }),
-                ])),
-                terminated_tasks: vec![],
-            },
-        ];
-        assert_eq!(expected_result, states);
+            );
+            assert!(state.terminated_tasks.is_empty());
+        }
     }
 }

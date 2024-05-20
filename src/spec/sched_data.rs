@@ -26,18 +26,15 @@ impl TaskControlBlock {
     }
 }
 
-//pub(crate) type TcbPtr = Rc<RefCell<TaskControlBlock>>;
-pub(crate) type TcbPtr = Box<TaskControlBlock>;
-
 #[derive(Clone, PartialEq, Eq, Debug)]
-pub(crate) struct ReadyQueue(pub(crate) VecDeque<TcbPtr>);
+pub(crate) struct ReadyQueue(pub(crate) VecDeque<TaskControlBlock>);
 
 impl ReadyQueue {
     pub(crate) fn new() -> Self {
         ReadyQueue(VecDeque::new())
     }
 
-    pub(crate) fn enqueue(&mut self, new_task: TcbPtr) {
+    pub(crate) fn enqueue(&mut self, new_task: TaskControlBlock) {
         if self.0.is_empty() {
             self.0.push_back(new_task);
             return;
@@ -58,15 +55,15 @@ impl ReadyQueue {
         }
     }
 
-    pub(crate) fn front(&self) -> Option<&TcbPtr> {
+    pub(crate) fn front(&self) -> Option<&TaskControlBlock> {
         self.0.front()
     }
 
-    pub(crate) fn dequeue(&mut self) -> Option<TcbPtr> {
+    pub(crate) fn dequeue(&mut self) -> Option<TaskControlBlock> {
         self.0.pop_front()
     }
 
-    pub(crate) fn iter(&self) -> std::collections::vec_deque::Iter<TcbPtr> {
+    pub(crate) fn iter(&self) -> std::collections::vec_deque::Iter<TaskControlBlock> {
         self.0.iter()
     }
 }
@@ -99,7 +96,7 @@ mod tests {
             let mut queue = ReadyQueue::new();
 
             for (i, prio) in input.into_iter().enumerate() {
-                queue.enqueue(Box::new(TaskControlBlock::new((i + 1) as u32, prio as u32)))
+                queue.enqueue(TaskControlBlock::new((i + 1) as u32, prio as u32))
             }
 
             for (i, _) in queue.0.iter().enumerate() {
@@ -114,29 +111,29 @@ mod tests {
     fn test_simple_enqueue() {
         let mut queue = ReadyQueue(VecDeque::new());
 
-        let task1 = Box::new(TaskControlBlock {
+        let task1 = TaskControlBlock {
             tid: 1,
             prio: 1,
             state: TaskState::Ready,
-        });
+        };
 
-        let task2 = Box::new(TaskControlBlock {
+        let task2 = TaskControlBlock {
             tid: 2,
             prio: 2,
             state: TaskState::Ready,
-        });
+        };
 
-        let task3 = Box::new(TaskControlBlock {
+        let task3 = TaskControlBlock {
             tid: 3,
             prio: 3,
             state: TaskState::Ready,
-        });
+        };
 
-        let task4 = Box::new(TaskControlBlock {
+        let task4 = TaskControlBlock {
             tid: 4,
             prio: 2,
             state: TaskState::New,
-        });
+        };
 
         queue.enqueue(task1.clone());
         queue.enqueue(task2.clone());
@@ -154,29 +151,29 @@ mod tests {
     fn test_dequeue() {
         let mut queue = ReadyQueue(VecDeque::new());
 
-        let task1 = Box::new(TaskControlBlock {
+        let task1 = TaskControlBlock {
             tid: 1,
             prio: 1,
             state: TaskState::Ready,
-        });
+        };
 
-        let task2 = Box::new(TaskControlBlock {
+        let task2 = TaskControlBlock {
             tid: 2,
             prio: 2,
             state: TaskState::Ready,
-        });
+        };
 
-        let task3 = Box::new(TaskControlBlock {
+        let task3 = TaskControlBlock {
             tid: 3,
             prio: 3,
             state: TaskState::Ready,
-        });
+        };
 
-        let task4 = Box::new(TaskControlBlock {
+        let task4 = TaskControlBlock {
             tid: 4,
             prio: 2,
             state: TaskState::New,
-        });
+        };
 
         queue.enqueue(task1.clone());
         queue.enqueue(task2.clone());
