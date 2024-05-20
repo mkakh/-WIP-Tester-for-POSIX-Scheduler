@@ -3,7 +3,7 @@ use crate::spec::{sched_data::TaskState, scheduler};
 pub struct PthreadExit;
 
 impl super::FormalizedFunction for PthreadExit {
-    fn is_invokable(&self, current: &scheduler::State, caller: u32, _args: &[usize]) -> bool {
+    fn is_invokable(&self, current: &scheduler::State, caller: u32, _args: &[u32]) -> bool {
         for core in current.cpu.cores.iter() {
             if let Some(task) = &core.task {
                 if task.tid == caller {
@@ -15,23 +15,18 @@ impl super::FormalizedFunction for PthreadExit {
         false
     }
 
-    fn args(&self) -> &[(usize, usize)] {
+    fn args(&self) -> &[(u32, u32)] {
         &[]
     }
 
-    fn call(
-        &self,
-        current: &scheduler::State,
-        caller: u32,
-        args: &[usize],
-    ) -> Vec<scheduler::State> {
+    fn call(&self, current: &scheduler::State, caller: u32, args: &[u32]) -> Vec<scheduler::State> {
         assert!(super::check_args(self, args));
         assert!(self.is_invokable(current, caller, args));
 
         let mut next = current.clone();
         for (i, core) in current.cpu.cores.iter().enumerate() {
             if let Some(task) = &core.task {
-                if task.tid == caller as u32 {
+                if task.tid == caller {
                     let mut task = {
                         let t = next.cpu.cores[i].task.take();
                         assert!(t.is_some());

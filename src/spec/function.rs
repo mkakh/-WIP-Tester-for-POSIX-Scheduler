@@ -3,19 +3,14 @@ mod pthread_exit;
 use crate::spec::scheduler;
 
 pub trait FormalizedFunction {
-    fn is_invokable(&self, current: &scheduler::State, caller: u32, args: &[usize]) -> bool;
+    fn is_invokable(&self, current: &scheduler::State, caller: u32, args: &[u32]) -> bool;
 
-    fn args(&self) -> &[(usize, usize)];
+    fn args(&self) -> &[(u32, u32)];
 
-    fn call(
-        &self,
-        current: &scheduler::State,
-        caller: u32,
-        args: &[usize],
-    ) -> Vec<scheduler::State>;
+    fn call(&self, current: &scheduler::State, caller: u32, args: &[u32]) -> Vec<scheduler::State>;
 }
 
-fn check_args(f: &dyn FormalizedFunction, args: &[usize]) -> bool {
+fn check_args(f: &dyn FormalizedFunction, args: &[u32]) -> bool {
     assert_eq!(args.len(), f.args().len());
 
     for (i, &arg) in args.iter().enumerate() {
