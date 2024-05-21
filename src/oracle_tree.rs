@@ -1,51 +1,82 @@
 use crate::spec::{
+    cpu::CPU,
     function::{get_function, FormalizedFunctionType},
-    scheduler::State,
+    sched_data::ReadyQueue,
+    scheduler,
 };
 use spin::mutex::SpinMutex;
 
-type StateGroup = Vec<State>;
+type NodeGroup = Vec<Node>;
 
+// The root node
 #[derive(Debug, PartialEq, Eq)]
 pub struct OracleTree {
-    edges: Vec<Edge>,
+    root: Node,
 }
 
 impl OracleTree {
     const fn new() -> Self {
-        OracleTree { edges: vec![] }
-    }
-
-    pub fn add_edge(&mut self, edge: Edge) {
-        self.edges.push(edge);
+        OracleTree {
+            root: Node {
+                expected_state: scheduler::State {
+                    cpu: CPU::const_new(),
+                    ready_queue: ReadyQueue::new(),
+                    terminated_tasks: vec![],
+                },
+                edges: vec![],
+            },
+        }
     }
 
     pub fn init(num_core: u32) {
         let spawn = get_function(FormalizedFunctionType::Spawn);
-        let states = spawn.call(&State::new(num_core), 0, &[]);
-        let mut new_tree = OracleTree::new();
-        new_tree.add_edge(Edge {
+        let states = spawn.call(&scheduler::State::new(num_core), 0, &[]);
+        let node_group = {
+            let mut v = vec![];
+            for state in states.into_iter() {
+                v.push(Node {
+                    expected_state: state,
+                    edges: vec![],
+                });
+            }
+            v
+        };
+
+        let mut tree = ORACLE_TREE.lock();
+        let root: &mut Node = &mut tree.root;
+
+        root.add_edge(Edge {
             fn_type: FormalizedFunctionType::Spawn,
             args: vec![],
-            children: states,
+            node_group,
         });
-        let mut tree = ORACLE_TREE.lock();
-        *tree = new_tree;
     }
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct Edge {
+struct Node {
+    expected_state: scheduler::State,
+    edges: Vec<Edge>,
+}
+
+impl Node {
+    pub fn add_edge(&mut self, edge: Edge) {
+        self.edges.push(edge);
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+struct Edge {
     fn_type: FormalizedFunctionType,
     args: Vec<u32>,
-    children: StateGroup,
+    node_group: NodeGroup,
 }
 
 pub static ORACLE_TREE: SpinMutex<OracleTree> = SpinMutex::new(OracleTree::new());
 
 #[cfg(test)]
 mod tests {
-    use super::{Edge, OracleTree, ORACLE_TREE};
+    use super::{Edge, Node, NodeGroup, OracleTree, ORACLE_TREE};
     use crate::spec::{
         cpu::{Core, CPU},
         function::FormalizedFunctionType::Spawn,
@@ -57,50 +88,62 @@ mod tests {
     fn test_oracle_tree_init() {
         OracleTree::init(2);
         let tree = ORACLE_TREE.lock();
-        println!("{:#?}", *tree);
         assert_eq!(
             *tree,
             OracleTree {
-                edges: vec![Edge {
-                    fn_type: Spawn,
-                    args: vec![],
-                    children: vec![
-                        State {
-                            cpu: CPU {
-                                cores: vec![
-                                    Core {
-                                        id: 0,
-                                        task: Some(TaskControlBlock {
-                                            tid: 1,
-                                            prio: 1,
-                                            state: Running,
-                                        }),
+                root: Node {
+                    expected_state: State {
+                        cpu: CPU { cores: vec![] },
+                        ready_queue: ReadyQueue::new(),
+                        terminated_tasks: vec![],
+                    },
+                    edges: vec![Edge {
+                        fn_type: Spawn,
+                        args: vec![],
+                        node_group: vec![
+                            Node {
+                                expected_state: State {
+                                    cpu: CPU {
+                                        cores: vec![
+                                            Core {
+                                                id: 0,
+                                                task: Some(TaskControlBlock {
+                                                    tid: 1,
+                                                    prio: 1,
+                                                    state: Running,
+                                                },),
+                                            },
+                                            Core { id: 1, task: None },
+                                        ],
                                     },
-                                    Core { id: 1, task: None },
-                                ],
+                                    ready_queue: ReadyQueue::new(),
+                                    terminated_tasks: vec![],
+                                },
+                                edges: vec![],
                             },
-                            ready_queue: ReadyQueue::new(),
-                            terminated_tasks: vec![],
-                        },
-                        State {
-                            cpu: CPU {
-                                cores: vec![
-                                    Core { id: 0, task: None },
-                                    Core {
-                                        id: 1,
-                                        task: Some(TaskControlBlock {
-                                            tid: 1,
-                                            prio: 1,
-                                            state: Running,
-                                        }),
+                            Node {
+                                expected_state: State {
+                                    cpu: CPU {
+                                        cores: vec![
+                                            Core { id: 0, task: None },
+                                            Core {
+                                                id: 1,
+                                                task: Some(TaskControlBlock {
+                                                    tid: 1,
+                                                    prio: 1,
+                                                    state: Running,
+                                                },),
+                                            },
+                                        ],
                                     },
-                                ],
+                                    ready_queue: ReadyQueue::new(),
+                                    terminated_tasks: vec![],
+                                },
+                                edges: vec![],
                             },
-                            ready_queue: ReadyQueue::new(),
-                            terminated_tasks: vec![],
-                        },
-                    ],
-                }],
+                        ],
+                    },],
+                },
             }
         );
     }

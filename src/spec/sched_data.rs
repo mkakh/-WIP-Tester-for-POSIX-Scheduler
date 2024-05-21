@@ -30,7 +30,7 @@ impl TaskControlBlock {
 pub(crate) struct ReadyQueue(pub(crate) VecDeque<TaskControlBlock>);
 
 impl ReadyQueue {
-    pub(crate) fn new() -> Self {
+    pub(crate) const fn new() -> Self {
         ReadyQueue(VecDeque::new())
     }
 

@@ -13,6 +13,10 @@ pub(crate) struct Core {
 }
 
 impl CPU {
+    pub(crate) const fn const_new() -> Self {
+        CPU { cores: Vec::new() }
+    }
+
     pub(crate) fn new(n: u32) -> Self {
         let mut cores = vec![];
         for id in 0..n {
