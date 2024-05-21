@@ -11,3 +11,4 @@ clippy = { version = "0.0.302", optional = true }
 itertools = "0.10.5"
 memory-stats = "1.1.0"
 once_cell = "1.18.0"
+spin = "0.9.8"
