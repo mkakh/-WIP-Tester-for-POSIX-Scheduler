@@ -1,5 +1,6 @@
 mod pthread_create;
 mod pthread_exit;
+mod spawn;
 use crate::spec::scheduler;
 
 pub trait FormalizedFunction {
@@ -26,10 +27,12 @@ fn check_args(f: &dyn FormalizedFunction, args: &[u32]) -> bool {
 pub enum FormalizedFunctionType {
     PthreadCreate,
     PthreadExit,
+    Spawn,
 }
 
 pub fn get_function(fn_type: FormalizedFunctionType) -> &'static dyn FormalizedFunction {
     match fn_type {
+        FormalizedFunctionType::Spawn => &spawn::FUNCTION,
         FormalizedFunctionType::PthreadCreate => &pthread_create::FUNCTION,
         FormalizedFunctionType::PthreadExit => &pthread_exit::FUNCTION,
     }
