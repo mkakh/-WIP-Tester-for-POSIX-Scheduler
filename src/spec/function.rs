@@ -23,6 +23,7 @@ fn check_args(f: &dyn FormalizedFunction, args: &[u32]) -> bool {
     true
 }
 
+#[derive(Debug, PartialEq, Eq)]
 // TODO change the name
 pub enum FormalizedFunctionType {
     PthreadCreate,
