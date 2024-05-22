@@ -2,7 +2,7 @@ use crate::spec::scheduler;
 
 pub struct PthreadCreate;
 
-impl super::FormalizedFunction for PthreadCreate {
+impl super::Formalized for PthreadCreate {
     fn is_invokable(&self, current: &scheduler::State, caller: u32, _args: &[u32]) -> bool {
         for core in current.cpu.cores.iter() {
             if let Some(task) = &core.task {
@@ -36,7 +36,7 @@ pub static FUNCTION: PthreadCreate = PthreadCreate;
 #[cfg(test)]
 mod tests {
     use crate::spec::{
-        function::{get_function, FormalizedFunctionType},
+        function::{get_function, Function},
         sched_data::{ReadyQueue, TaskControlBlock, TaskState},
         scheduler::State,
     };
@@ -48,7 +48,7 @@ mod tests {
 
         let mut new_states = vec![];
         for state in states.into_iter() {
-            for new_state in get_function(FormalizedFunctionType::PthreadCreate)
+            for new_state in get_function(Function::PthreadCreate)
                 .call(&state, 1, &[3])
                 .into_iter()
             {
@@ -61,7 +61,7 @@ mod tests {
 
         new_states = vec![];
         for state in states.iter() {
-            for new_state in get_function(FormalizedFunctionType::PthreadCreate)
+            for new_state in get_function(Function::PthreadCreate)
                 .call(&state, 1, &[2])
                 .into_iter()
             {
@@ -74,7 +74,7 @@ mod tests {
 
         new_states = vec![];
         for state in states.iter() {
-            for new_state in get_function(FormalizedFunctionType::PthreadCreate)
+            for new_state in get_function(Function::PthreadCreate)
                 .call(&state, 2, &[4])
                 .into_iter()
             {

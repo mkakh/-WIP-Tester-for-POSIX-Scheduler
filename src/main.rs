@@ -8,7 +8,7 @@ fn main() {
 
     let mut new_states = vec![];
     for state in states.into_iter() {
-        for new_state in function::get_function(function::FormalizedFunctionType::PthreadCreate)
+        for new_state in function::get_function(function::Function::PthreadCreate)
             .call(&state, 1, &[3])
             .into_iter()
         {
@@ -21,7 +21,7 @@ fn main() {
 
     let mut new_states = vec![];
     for state in states.into_iter() {
-        for new_state in function::get_function(function::FormalizedFunctionType::PthreadCreate)
+        for new_state in function::get_function(function::Function::PthreadCreate)
             .call(&state, 1, &[3])
             .into_iter()
         {
@@ -34,7 +34,7 @@ fn main() {
 
     let mut new_states = vec![];
     for state in states.into_iter() {
-        for new_state in function::get_function(function::FormalizedFunctionType::PthreadExit)
+        for new_state in function::get_function(function::Function::PthreadExit)
             .call(&state, 3, &[])
             .into_iter()
         {

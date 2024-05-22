@@ -3,7 +3,7 @@ use crate::spec::scheduler::State;
 pub struct Spawn;
 
 // Pseudo function that corresponding to the procedure when this program is launched
-impl super::FormalizedFunction for Spawn {
+impl super::Formalized for Spawn {
     fn is_invokable(&self, _: &State, _: u32, _: &[u32]) -> bool {
         false
     }
@@ -24,14 +24,14 @@ pub static FUNCTION: Spawn = Spawn;
 mod tests {
     use crate::spec::{
         cpu::{Core, CPU},
-        function::{get_function, FormalizedFunctionType},
+        function::{get_function, Function},
         sched_data::{ReadyQueue, TaskControlBlock, TaskState},
         scheduler::State,
     };
 
     #[test]
     fn test_spawn() {
-        let spawn = get_function(FormalizedFunctionType::Spawn);
+        let spawn = get_function(Function::Spawn);
         let states = spawn.call(&State::new(2), 0, &[]);
 
         assert_eq!(

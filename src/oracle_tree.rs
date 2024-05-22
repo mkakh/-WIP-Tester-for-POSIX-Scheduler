@@ -1,6 +1,6 @@
 use crate::spec::{
     cpu::CPU,
-    function::{get_function, FormalizedFunctionType},
+    function::{get_function, Function},
     sched_data::ReadyQueue,
     scheduler,
 };
@@ -29,7 +29,7 @@ impl OracleTree {
     }
 
     pub fn init(num_core: u32) {
-        let spawn = get_function(FormalizedFunctionType::Spawn);
+        let spawn = get_function(Function::Spawn);
         let states = spawn.call(&scheduler::State::new(num_core), 0, &[]);
         let node_group = {
             let mut v = vec![];
@@ -46,7 +46,7 @@ impl OracleTree {
         let root: &mut Node = &mut tree.root;
 
         root.add_edge(Edge {
-            fn_type: FormalizedFunctionType::Spawn,
+            fn_type: Function::Spawn,
             args: vec![],
             node_group,
         });
@@ -67,7 +67,7 @@ impl Node {
 
 #[derive(Debug, PartialEq, Eq)]
 struct Edge {
-    fn_type: FormalizedFunctionType,
+    fn_type: Function,
     args: Vec<u32>,
     node_group: NodeGroup,
 }
@@ -76,10 +76,10 @@ pub static ORACLE_TREE: SpinMutex<OracleTree> = SpinMutex::new(OracleTree::new()
 
 #[cfg(test)]
 mod tests {
-    use super::{Edge, Node, NodeGroup, OracleTree, ORACLE_TREE};
+    use super::{Edge, Node, OracleTree, ORACLE_TREE};
     use crate::spec::{
         cpu::{Core, CPU},
-        function::FormalizedFunctionType::Spawn,
+        function::Function::Spawn,
         sched_data::{ReadyQueue, TaskControlBlock, TaskState::Running},
         scheduler::State,
     };
