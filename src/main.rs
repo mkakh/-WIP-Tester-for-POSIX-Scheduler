@@ -1,4 +1,5 @@
 mod oracle_tree;
+mod search;
 mod spec;
 
 use spec::{function, scheduler};
