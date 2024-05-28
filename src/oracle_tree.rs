@@ -68,6 +68,13 @@ pub struct Node {
 }
 
 impl Node {
+    pub fn new(state: scheduler::State) -> Node {
+        Node {
+            expected_state: state,
+            edges: vec![],
+        }
+    }
+
     pub fn add_edge(&mut self, edge: Edge) {
         self.edges.push(edge);
     }
@@ -75,13 +82,17 @@ impl Node {
     pub fn get_edges(&self) -> Vec<&Edge> {
         self.edges.iter().collect()
     }
+
+    pub fn get_state(&self) -> &scheduler::State {
+        &self.expected_state
+    }
 }
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Edge {
-    fn_type: Function,
-    args: Vec<u32>,
-    node_group: NodeGroup,
+    pub fn_type: Function,
+    pub args: Vec<u32>,
+    pub node_group: NodeGroup,
 }
 
 pub static ORACLE_TREE: SpinMutex<OracleTree> = SpinMutex::new(OracleTree::new());

@@ -2,6 +2,7 @@ mod pthread_create;
 mod pthread_exit;
 mod spawn;
 use crate::spec::scheduler;
+use strum_macros::EnumIter;
 
 pub trait Formalized {
     fn is_invokable(&self, current: &scheduler::State, caller: u32, args: &[u32]) -> bool;
@@ -23,7 +24,7 @@ fn check_args(f: &dyn Formalized, args: &[u32]) -> bool {
     true
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, EnumIter)]
 pub enum Function {
     PthreadCreate,
     PthreadExit,
