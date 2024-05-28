@@ -51,10 +51,18 @@ impl OracleTree {
             node_group,
         });
     }
+
+    pub fn get_init_nodes(&self) -> Vec<&Node> {
+        let mut v = vec![];
+        for edge in self.root.get_edges().into_iter() {
+            v.append(&mut edge.node_group.iter().collect());
+        }
+        v
+    }
 }
 
 #[derive(Debug, PartialEq, Eq)]
-struct Node {
+pub struct Node {
     expected_state: scheduler::State,
     edges: Vec<Edge>,
 }
@@ -63,10 +71,14 @@ impl Node {
     pub fn add_edge(&mut self, edge: Edge) {
         self.edges.push(edge);
     }
+
+    pub fn get_edges(&self) -> Vec<&Edge> {
+        self.edges.iter().collect()
+    }
 }
 
 #[derive(Debug, PartialEq, Eq)]
-struct Edge {
+pub struct Edge {
     fn_type: Function,
     args: Vec<u32>,
     node_group: NodeGroup,
